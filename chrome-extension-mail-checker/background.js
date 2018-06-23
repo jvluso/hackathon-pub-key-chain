@@ -19,7 +19,7 @@ var requestTimerId;
 
 function getGmailUrl() {
   return "https://www.googleapis.com/gmail/v1/users/me/messages?q="
-    + encodeURIComponent("Subject: is:unread");
+    + encodeURIComponent("Subject:[PKC] is:unread");
 }
 
 // Identifier used to debug the possibility of multiple instances of the
