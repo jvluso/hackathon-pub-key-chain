@@ -1,0 +1,29 @@
+self-certified public key infrastructure on the blockchain
+
+Components:
++ Email client plugin: Chrome extension for GMail
++ blockchain
+
+Publish:
+
+1. The Client certifies its email address with its public key, the certificate.
+2. The Client sends the certificate to the blockchain.
+3. The blockchain sends a challenging nonce to that address and posts the nonce to the blockchain.
+   Up to N random nodes can send N challenging nonces, and this prevents an attacker from control a single node.
+4. The Client signs (nonce + 1) and sends it to the blockchain for each challenging nonce, up to N responses.
+5. The Client deletes the challenging email after a response.
+
+Search and verify a public key for an email address:
+
+1. The Client searches the blockchain for the certificate of an email address.
+2. The blockchain finds the N response from the address.
+3. If the response is found, then the blockchain continues to search for the corresponding challenge.
+4. If the challenge is found, then verify the signature is (nonce + 1).
+5. If more than N/2 responses are correct, then the certificate is believed to be legitimate.
+
+
+Search for a public key
+
+
+ThreadRowView.getSubject
+ThreadView.getSubject

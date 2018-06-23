@@ -18,7 +18,8 @@ var oldChromeVersion = !chrome.runtime;
 var requestTimerId;
 
 function getGmailUrl() {
-  return "https://mail.google.com/mail/";
+  return "https://www.googleapis.com/gmail/v1/users/me/messages?q="
+    + encodeURIComponent("Subject: is:unread");
 }
 
 // Identifier used to debug the possibility of multiple instances of the
@@ -32,7 +33,7 @@ function getInstanceId() {
 function getFeedUrl() {
   // "zx" is a Gmail query parameter that is expected to contain a random
   // string and may be ignored/stripped.
-  return getGmailUrl() + "feed/atom?zx=" + encodeURIComponent(getInstanceId());
+  return getGmailUrl(); // + "feed/atom?zx=" + encodeURIComponent(getInstanceId());
 }
 
 function isGmailUrl(url) {
@@ -123,7 +124,8 @@ function startRequest(params) {
   // Schedule request immediately. We want to be sure to reschedule, even in the
   // case where the extension process shuts down while this request is
   // outstanding.
-  if (params && params.scheduleRequest) scheduleRequest();
+  if (params && params.scheduleRequest)
+    //scheduleRequest();
 
   function stopLoadingAnimation() {
     if (params && params.showLoadingAnimation) loadingAnimation.stop();
