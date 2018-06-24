@@ -17,9 +17,9 @@ const contract = new web3.eth.Contract(abi, address);
 //functions of contracts
 async getkey (email) {
   const pubkey = await contract.methods.getKey(email).call();
-}
+};
 
 async cert () {
   const response = await contract.methods.certificates().call();
-}
+};
 </script>
