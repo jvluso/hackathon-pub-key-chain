@@ -1,5 +1,5 @@
 'use strict';
-let userName = "PKC", emailAddress = "address@gmail.com";
+let userName = "", emailAddress = window.userEmailAddress;
 let userPassphrase="none";
 let pgp = window.openpgp;
 let allPublicKeys = {};

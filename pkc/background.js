@@ -1,5 +1,8 @@
  chrome.runtime.onInstalled.addListener(function() {
       chrome.identity.getAuthToken({interactive: true}, authorizationCallback);
+      chrome.identity.getProfileUserInfo(userInfo => {
+        window.userEmailAddress = userInfo.email;
+      });
   });
 
  var authorizationCallback = function (data) {
