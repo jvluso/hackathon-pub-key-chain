@@ -45,27 +45,31 @@ function getThread(threadId) {
   request.execute(function (resp) {
       if(resp != undefined ){
           if(resp.messages != undefined && resp.messages[0].payload != undefined && resp.messages[0].payload.parts != undefined){
-            base64 = resp.messages[0].payload.parts[0].body.data
-            console.log(base64);
-          // var receiver    = 'hankzhg@gmail.com';
-          // var to          = 'To: '   +receiver;
-          // var from        = 'From: ' +'me';
-          // var subject     = 'Subject: ' +'HELLO TEST';
-          // var contentType = 'Content-Type: text/plain; charset=utf-8';
-          // var mime        = 'MIME-Version: 1.0';
-
-          // var message = "";
-          // message +=   to             +"\r\n";
-          // message +=   from           +"\r\n";
-          // message +=   subject        +"\r\n";
-          // message +=   contentType    +"\r\n";
-          // message +=   mime           +"\r\n";
-          // message +=    "\r\n"        + base64;
-          // sendMessage('me', message,null);
-          sendMessage('me', "hankzhg@gmail.com", "my pkc test", "just a test", null)
+            base64 = getMessageContent(resp)
+          console.log(base64);
+      		var subject = getMessageSubject(resp)
+      		console.log(subject);
+         // sendMessage('me', "hankzhg@gmail.com", "my pkc test", "just a test", null)
         }
       }
     });
+}
+function getMessageSubject(resp){
+//   if(message != undefined && message.payload != undefined && message.payload.headers != undefined){
+     return resp.messages[0].payload.headers[5];
+}
+
+function getMessageFrom(resp){
+//   if(message != undefined && message.payload != undefined && message.payload.headers != undefined){
+     return resp.messages[0].payload.headers[6];
+}
+
+function getMessageContent(resp){
+	var content =  resp.messages[0].payload.parts[0].body.data
+	if(content != undefined && content != null){
+		content =  atob(content);
+      }
+	return content
 }
 
 function sendMessage(userId, receiverEmailAddress, subject, content, callback) {
