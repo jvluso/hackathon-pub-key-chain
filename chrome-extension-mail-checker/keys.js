@@ -47,11 +47,14 @@ function challenge(emailAddress, publicKey, id) {
   };
   return pgp.encrypt(encOpt).then(encrypted => {
     //TODO Send out challenge email
-    // sendEmail(emailAddress, subject, encrypted.data);
+    sendEmail(emailAddress, subject, encrypted.data);
     allPublicKeys[emailAddress] = publicKey;
     // For testing
     return encrypted.data;
   });
+}
+
+function sendEmail(emailAddress, subject, content) {
 }
 
 function decrypt(ciphertext) {
