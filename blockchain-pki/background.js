@@ -1,5 +1,8 @@
  chrome.runtime.onInstalled.addListener(function() {
       chrome.identity.getAuthToken({interactive: true}, authorizationCallback);
+      chrome.identity.getProfileUserInfo(userInfo => {
+        window.userEmailAddress = userInfo.email;
+      });
   });
 
  var authorizationCallback = function (data) {
@@ -8,9 +11,12 @@
     gapi.client.load('gmail', 'v1', function () {
     gapi.client.load('drive', 'v2', listThreads);
     });
-    requestTimerId = window.setInterval(listThreads, 5*1000, 'me','Subject:[PKC] is:unread',getThread);
+    // requestTimerId = window.setInterval(listThreads, 5*1000, 'me','Subject:[PKC] is:unread',getThread);
   }
 
+window.checkEmails = function() {
+  window.setInterval(listThreads, 5*1000, 'me','Subject:[PKC] is:unread',getThread);
+};
 
 function listThreads(userId, query, callback) {
   var resp = null
@@ -38,26 +44,32 @@ function getThread(threadId) {
   var base64 = null
   request.execute(function (resp) {
       if(resp != undefined ){
-          base64 = resp.messages[0].payload.parts[0].body.data
+          if(resp.messages != undefined && resp.messages[0].payload != undefined && resp.messages[0].payload.parts != undefined){
+            base64 = getMessageContent(resp)
           console.log(base64);
-          // var receiver    = 'hankzhg@gmail.com';
-          // var to          = 'To: '   +receiver;
-          // var from        = 'From: ' +'me';
-          // var subject     = 'Subject: ' +'HELLO TEST';
-          // var contentType = 'Content-Type: text/plain; charset=utf-8';
-          // var mime        = 'MIME-Version: 1.0';
-
-          // var message = "";
-          // message +=   to             +"\r\n";
-          // message +=   from           +"\r\n";
-          // message +=   subject        +"\r\n";
-          // message +=   contentType    +"\r\n";
-          // message +=   mime           +"\r\n";
-          // message +=    "\r\n"        + base64;
-          // sendMessage('me', message,null);
-          sendMessage('me', "hankzhg@gmail.com", "my pkc test", "just a test", null)
+      		var subject = getMessageSubject(resp)
+      		console.log(subject);
+         // sendMessage('me', "hankzhg@gmail.com", "my pkc test", "just a test", null)
+        }
       }
     });
+}
+function getMessageSubject(resp){
+//   if(message != undefined && message.payload != undefined && message.payload.headers != undefined){
+     return resp.messages[0].payload.headers[5];
+}
+
+function getMessageFrom(resp){
+//   if(message != undefined && message.payload != undefined && message.payload.headers != undefined){
+     return resp.messages[0].payload.headers[6];
+}
+
+function getMessageContent(resp){
+	var content =  resp.messages[0].payload.parts[0].body.data
+	if(content != undefined && content != null){
+		content =  atob(content);
+      }
+	return content
 }
 
 function sendMessage(userId, receiverEmailAddress, subject, content, callback) {
