@@ -46,16 +46,12 @@ function challenge(emailAddress, publicKey, id) {
   plainNonce = nonceStr;
   let subject = "[PKC]";
   publicKey = pgp.key.readArmored(publicKey).keys[0];
-  let encOpt = {
-    publicKeys: publicKey,
-    data: nonceStr
-  };
-  return pgp.encrypt(encOpt).then(encrypted => {
+  return encrypt(publicKey, nonceStr).then(cipherText => {
     //TODO Send out challenge email
-    sendEmail(emailAddress, subject, encrypted.data);
+    sendEmail(emailAddress, subject, cipherText);
     allPublicKeys[emailAddress] = publicKey;
     // For testing
-    return encrypted.data;
+    return cipherText;
   });
 }
 
@@ -68,6 +64,22 @@ function decrypt(ciphertext) {
     message: pgp.message.readArmored(ciphertext)
   };
   return pgp.decrypt(decOpt).then(decrypted => decrypted.data);
+}
+
+function encrypt(publicKey, plaintext) {
+  let encOpt = {
+    publicKeys: publicKey,
+    data: plaintext
+  };
+  return pgp.encrypt(encOpt).then(encrypted => encrypted.data);
+}
+
+function sign(text) {
+  let signOpt = {
+    privateKeys: newUserKey.private,
+    data: text
+  };
+  return pgp.sign(signOpt).then(result => result.data);
 }
 
 function verifyChalglenge(from, responseBody) {
@@ -92,6 +104,21 @@ function array2base64(array) {
 
 function base642array(str) {
   return atob(str).split("").map(c => c.charCodeAt(0));
+}
+
+function processNewEmail(from, subject, content) {
+  // if subject is [PKC], then I'm a new user
+  if (subject === "[PKC]") {
+    decrypt(content).then(sign).then(signedResult => {
+      sendMessage('me', from, '[PKC-RESPONSE]', signedResult);
+    });
+  }
+  // if subject is [PKC-RESPONSE], then I'm an existing node
+  else if (subject === "[PKC-RESPONSE]") {
+    verifyChalglenge(from, content).then(result => {
+      // result is true/false
+    });
+  }
 }
 
 function main() {

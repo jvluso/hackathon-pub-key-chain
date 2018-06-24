@@ -15,7 +15,7 @@
   }
 
 window.checkEmails = function() {
-  window.setInterval(listThreads, 5*1000, 'me','Subject:[PKC] is:unread',getThread);
+  window.setInterval(listThreads, 5*1000, 'me','is:unread',getThread);
 };
 
 function listThreads(userId, query, callback) {
