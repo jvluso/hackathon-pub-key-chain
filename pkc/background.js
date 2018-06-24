@@ -12,12 +12,12 @@ window.setTimeout(() => {
 
 var web3Keys = chrome.extension.getURL('KeyRegistey.json');
 
-let userName = "", emailAddress = window.userEmailAddress;
-let userPassphrase="none";
-let pgp = window.openpgp;
-let allPublicKeys = {};
-let newUserKey = {public: null, private: null, publicKeyArmored: null};
-let plainNonce = undefined;
+var userName = "", emailAddress = window.userEmailAddress;
+var userPassphrase="none";
+var pgp = window.openpgp;
+var allPublicKeys = {};
+var newUserKey = {public: null, private: null, publicKeyArmored: null};
+var plainNonce = undefined;
 
 function generateKey() {
   let opts = {
