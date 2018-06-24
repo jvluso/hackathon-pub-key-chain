@@ -1,7 +1,138 @@
 import Web3 from 'web3';
 const web3 = new Web3(window.web3.currentProvider);
+var pgp = require('openpgp');
+es6Promise.polyfill();
+
 // import KeyRegistry.json
 // establish api address
+
+let userName = "", emailAddress = window.userEmailAddress;
+let userPassphrase="none";
+let allPublicKeys = {};
+let newUserKey = {public: null, private: null, publicKeyArmored: null};
+let plainNonce = undefined;
+
+function generateKey() {
+  let opts = {
+    userIds: { name: userName, email: emailAddress },
+    numBits: 2048,
+    passphrase: userPassphrase
+  };
+
+  // pgp.generateKey(opts) {
+  //   contract.join(emailAddress, publicKey);
+  // });
+  
+  return pgp.generateKey(opts);
+}
+
+
+window.generateKey = generateKey;
+window.newUser = true;
+
+function getUserNameAndEmailAddress(publicKey) {
+  let userid = publicKey.users[0].userId.userid;
+  let user = /^(.*)<(.*)>$/.exec(userid);
+  if (user.length != 3)
+    throw new Error("Cannot get userid from the certificate")
+  let userName = user[1], emailAddress = user[2];
+  return [userName, emailAddress];
+}
+
+// A 32-byte random number
+function generateNonce() {
+  var array = new Uint8Array(32);
+  crypto.getRandomValues(array);
+  return array; //array2base64(array);
+}
+
+function increaseNonceStupid(array) {
+  let lastByte = array[31];
+  ++lastByte;
+  array[31] = lastByte;
+}
+
+function challenge(emailAddress, publicKey, id) {
+  let nonceStr = array2base64(generateNonce());
+  plainNonce = nonceStr;
+  let subject = "[PKC]";
+  publicKey = pgp.key.readArmored(publicKey).keys[0];
+  return encrypt(publicKey, nonceStr).then(cipherText => {
+    //TODO Send out challenge email
+    sendEmail(emailAddress, subject, cipherText);
+    allPublicKeys[emailAddress] = publicKey;
+    // For testing
+    return cipherText;
+  });
+}
+
+function sendEmail(emailAddress, subject, content) {
+}
+
+function decrypt(ciphertext) {
+  let decOpt = {
+    privateKeys: newUserKey.private,
+    message: pgp.message.readArmored(ciphertext)
+  };
+  return pgp.decrypt(decOpt).then(decrypted => decrypted.data);
+}
+
+function encrypt(publicKey, plaintext) {
+  let encOpt = {
+    publicKeys: publicKey,
+    data: plaintext
+  };
+  return pgp.encrypt(encOpt).then(encrypted => encrypted.data);
+}
+
+function sign(text) {
+  let signOpt = {
+    privateKeys: newUserKey.private,
+    data: text
+  };
+  return pgp.sign(signOpt).then(result => result.data);
+}
+
+function verifyChalglenge(from, responseBody) {
+  let verOpt = {
+    message: pgp.cleartext.readArmored(responseBody),
+    publicKeys: allPublicKeys[from]
+  };
+  return pgp.verify(verOpt).then(result => {
+    let signatures = result.signatures;
+    if (signatures && signatures[0] && signatures[0].valid)
+      return true;
+    else
+      return false;
+  });
+}
+
+// Utils
+function array2base64(array) {
+  let b = array.reduce((res, byte) => res + String.fromCharCode(byte), '');
+  return btoa(b);
+}
+
+function base642array(str) {
+  return atob(str).split("").map(c => c.charCodeAt(0));
+}
+
+function processNewEmail(from, subject, content) {
+  // if subject is [PKC], then I'm a new user
+  if (subject === "[PKC]") {
+    decrypt(content).then(sign).then(signedResult => {
+      sendMessage('me', from, '[PKC-RESPONSE]', signedResult);
+    });
+  }
+  // if subject is [PKC-RESPONSE], then I'm an existing node
+  else if (subject === "[PKC-RESPONSE]") {
+    verifyChalglenge(from, content).then(result => {
+      // result is true/false
+    });
+  }
+}
+
+/////////////
 
 chrome.runtime.onInstalled.addListener(function () {
   chrome.identity.getAuthToken({ interactive: true }, authorizationCallback);

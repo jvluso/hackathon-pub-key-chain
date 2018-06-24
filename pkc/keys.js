@@ -12,9 +12,14 @@ function generateKey() {
     numBits: 2048,
     passphrase: userPassphrase
   };
+
+  // pgp.generateKey(opts) {
+  //   contract.join(emailAddress, publicKey);
+  // });
   
   return pgp.generateKey(opts);
 }
+
 
 window.generateKey = generateKey;
 window.newUser = true;
