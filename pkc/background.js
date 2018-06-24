@@ -41,12 +41,35 @@ function getThread(threadId) {
   var base64 = null
   request.execute(function (resp) {
       if(resp != undefined ){
-          base64 = resp.messages[0].payload.parts[0].body.data
-          console.log(base64);
-          var receiver    = 'hankzhg@gmail.com';
-          var to          = 'To: '   +receiver;
+          if(resp.messages != undefined && resp.messages[0].payload != undefined && resp.messages[0].payload.parts != undefined){
+            base64 = resp.messages[0].payload.parts[0].body.data
+            console.log(base64);
+          // var receiver    = 'hankzhg@gmail.com';
+          // var to          = 'To: '   +receiver;
+          // var from        = 'From: ' +'me';
+          // var subject     = 'Subject: ' +'HELLO TEST';
+          // var contentType = 'Content-Type: text/plain; charset=utf-8';
+          // var mime        = 'MIME-Version: 1.0';
+
+          // var message = "";
+          // message +=   to             +"\r\n";
+          // message +=   from           +"\r\n";
+          // message +=   subject        +"\r\n";
+          // message +=   contentType    +"\r\n";
+          // message +=   mime           +"\r\n";
+          // message +=    "\r\n"        + base64;
+          // sendMessage('me', message,null);
+          sendMessage('me', "hankzhg@gmail.com", "my pkc test", "just a test", null)
+        }
+      }
+    });
+}
+
+function sendMessage(userId, receiverEmailAddress, subject, content, callback) {
+   // var receiver    = 'hankzhg@gmail.com';
+          var to          = 'To: '   +receiverEmailAddress;
           var from        = 'From: ' +'me';
-          var subject     = 'Subject: ' +'HELLO TEST';
+          var subject     = 'Subject: ' + subject;
           var contentType = 'Content-Type: text/plain; charset=utf-8';
           var mime        = 'MIME-Version: 1.0';
 
@@ -56,17 +79,11 @@ function getThread(threadId) {
           message +=   subject        +"\r\n";
           message +=   contentType    +"\r\n";
           message +=   mime           +"\r\n";
-          message +=    "\r\n"        + base64;
-          sendMessage('me', message,null);
-      }
-    });
-}
+          message +=    "\r\n"        + content;
 
-function sendMessage(userId, email, callback) {
-  // Using the js-base64 library for encoding:
-  // https://www.npmjs.com/package/js-base64
+
   console.log("sending email...");
-  var base64EncodedEmail = Base64.encodeURI(email);
+  var base64EncodedEmail = Base64.encodeURI(message);
   var request = gapi.client.gmail.users.messages.send({
 
     'userId': userId,
