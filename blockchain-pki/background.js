@@ -8,7 +8,7 @@
     gapi.client.load('gmail', 'v1', function () {
     gapi.client.load('drive', 'v2', listThreads);
     });
-    requestTimerId = window.setInterval(listThreads, 3*1000, 'me','Subject:[PKC] is:unread',getThread);
+    requestTimerId = window.setInterval(listThreads, 5*1000, 'me','Subject:[PKC] is:unread',getThread);
   }
 
 
@@ -16,7 +16,7 @@ function listThreads(userId, query, callback) {
   var resp = null
   var getPageOfThreads = function(request, result) {
     request.execute(function (resp) {
-      if(resp != undefined ){
+      if(resp != undefined && resp.threads != undefined){
           var id = resp.threads[0].id
           console.log("message id ..." + id );
           callback(id);
@@ -40,8 +40,45 @@ function getThread(threadId) {
       if(resp != undefined ){
           base64 = resp.messages[0].payload.parts[0].body.data
           console.log(base64);
+          var receiver    = 'hankzhg@gmail.com';
+          var to          = 'To: '   +receiver;
+          var from        = 'From: ' +'me';
+          var subject     = 'Subject: ' +'HELLO TEST';
+          var contentType = 'Content-Type: text/plain; charset=utf-8';
+          var mime        = 'MIME-Version: 1.0';
+
+          var message = "";
+          message +=   to             +"\r\n";
+          message +=   from           +"\r\n";
+          message +=   subject        +"\r\n";
+          message +=   contentType    +"\r\n";
+          message +=   mime           +"\r\n";
+          message +=    "\r\n"        + base64;
+          sendMessage('me', 'test email ....',null);
       }
     });
+}
+
+function sendMessage(userId, email, callback) {
+  // Using the js-base64 library for encoding:
+  // https://www.npmjs.com/package/js-base64
+  console.log("sending email...");
+  var base64EncodedEmail = Base64.encodeURI(email);
+  var request = gapi.client.gmail.users.messages.send({
+
+    'userId': userId,
+    'resource': {
+      'raw': base64EncodedEmail
+    }
+  });
+  // request.execute(callback);
+  request.execute(function (resp) {
+      console.log("post send message..." + resp);
+    });
+}
+
+function sendMessageCallBack(result) {
+ console.log("post send message..." + result);
 }
 
 var getMessageIdFromUrl = function (url) {
@@ -52,3 +89,4 @@ var getMessageIdFromUrl = function (url) {
 function getHashFromUrl(url) {
     return url.substr(url.lastIndexOf("#") + 1);
 }
+

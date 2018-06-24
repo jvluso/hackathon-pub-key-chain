@@ -1,7 +1,9 @@
+'use strict';
 let userName = "PKC", emailAddress = "address@gmail.com", userPassphrase="none";
 let pgp = window.openpgp;
 
 function generateKey() {
+  console.log("generate keys...");
   let opts = {
     userIds: { name: userName, email: emailAddress },
     numBits: 2048,
