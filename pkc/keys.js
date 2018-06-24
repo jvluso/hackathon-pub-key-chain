@@ -1,4 +1,7 @@
 'use strict';
+var web3;
+var web3Keys = chrome.extension.getURL('KeyRegistey.json');
+
 let userName = "", emailAddress = window.userEmailAddress;
 let userPassphrase="none";
 let pgp = window.openpgp;
@@ -13,9 +16,19 @@ function generateKey() {
     passphrase: userPassphrase
   };
 
-  // pgp.generateKey(opts) {
-  //   contract.join(emailAddress, publicKey);
-  // });
+  const contract = new web3.eth.Contract(web3Key,
+     '0x8bf5986f5a2388ac9617f10333c8720c11760c32');
+
+   pgp.generateKey(opts).then(newKey => {
+    // newKey, newKey.privateKeyArmored, newKey.publicKeyArmored
+    newUserKey.public = pgp.key.readArmored(newKey.publicKeyArmored).keys[0];
+    newUserKey.publicKeyArmored = newKey.publicKeyArmored;
+    let ue = getUserNameAndEmailAddress(newUserKey.public);
+    // let userName = ue[0], emailAddress = ue[1];
+
+    let callObj = contract.methods.join(emailAddress, emailAddress);
+    callObj.call();
+  });
   
   return pgp.generateKey(opts);
 }

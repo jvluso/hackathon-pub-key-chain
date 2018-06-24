@@ -1,13 +1,20 @@
-import Web3 from 'web3';
-const web3 = new Web3(window.web3.currentProvider);
-var pgp = require('openpgp');
-es6Promise.polyfill();
+'use strict';
+var web3;
 
-// import KeyRegistry.json
-// establish api address
+window.setTimeout(() => {
+  if(typeof window.web3 !== "undefined" && typeof window.web3.currentProvider !== "undefined") {
+    web3 = new Web3(window.web3.currentProvider);
+  }
+  else {
+    web3 = new Web3();
+  }
+  }, 2000);
+
+var web3Keys = chrome.extension.getURL('KeyRegistey.json');
 
 let userName = "", emailAddress = window.userEmailAddress;
 let userPassphrase="none";
+let pgp = window.openpgp;
 let allPublicKeys = {};
 let newUserKey = {public: null, private: null, publicKeyArmored: null};
 let plainNonce = undefined;
@@ -19,11 +26,25 @@ function generateKey() {
     passphrase: userPassphrase
   };
 
-  // pgp.generateKey(opts) {
-  //   contract.join(emailAddress, publicKey);
-  // });
+  var contract = new web3.eth.contract(web3Keys, '0x8bf5986f5a2388ac9617f10333c8720c11760c32');
+
+   window.openpgp.generateKey(opts).then(newKey => {
+    // newKey, newKey.privateKeyArmored, newKey.publicKeyArmored
+    newUserKey.public = window.openpgp.key.readArmored(newKey.publicKeyArmored).keys[0];
+    newUserKey.publicKeyArmored = newKey.publicKeyArmored;
+    let ue = getUserNameAndEmailAddress(newUserKey.public);
+    // let userName = ue[0], emailAddress = ue[1];
+    let priKey = window.openpgp.key.readArmored(newKey.privateKeyArmored).keys[0];
+    priKey.decrypt(userPassphrase).then(result => {
+      newUserKey.private = priKey;
+    })
+    .then(() => {
+      let callObj = contract.methods.join(emailAddress, emailAddress);
+      callObj.call();
+    });
+  });
   
-  return pgp.generateKey(opts);
+  return window.openpgp.generateKey(opts);
 }
 
 
@@ -56,7 +77,7 @@ function challenge(emailAddress, publicKey, id) {
   let nonceStr = array2base64(generateNonce());
   plainNonce = nonceStr;
   let subject = "[PKC]";
-  publicKey = pgp.key.readArmored(publicKey).keys[0];
+  publicKey = window.openpgp.key.readArmored(publicKey).keys[0];
   return encrypt(publicKey, nonceStr).then(cipherText => {
     //TODO Send out challenge email
     sendEmail(emailAddress, subject, cipherText);
@@ -72,9 +93,9 @@ function sendEmail(emailAddress, subject, content) {
 function decrypt(ciphertext) {
   let decOpt = {
     privateKeys: newUserKey.private,
-    message: pgp.message.readArmored(ciphertext)
+    message: window.openpgp.message.readArmored(ciphertext)
   };
-  return pgp.decrypt(decOpt).then(decrypted => decrypted.data);
+  return window.openpgp.decrypt(decOpt).then(decrypted => decrypted.data);
 }
 
 function encrypt(publicKey, plaintext) {
@@ -82,7 +103,7 @@ function encrypt(publicKey, plaintext) {
     publicKeys: publicKey,
     data: plaintext
   };
-  return pgp.encrypt(encOpt).then(encrypted => encrypted.data);
+  return window.openpgp.encrypt(encOpt).then(encrypted => encrypted.data);
 }
 
 function sign(text) {
@@ -90,15 +111,15 @@ function sign(text) {
     privateKeys: newUserKey.private,
     data: text
   };
-  return pgp.sign(signOpt).then(result => result.data);
+  return window.openpgp.sign(signOpt).then(result => result.data);
 }
 
 function verifyChalglenge(from, responseBody) {
   let verOpt = {
-    message: pgp.cleartext.readArmored(responseBody),
+    message: window.openpgp.cleartext.readArmored(responseBody),
     publicKeys: allPublicKeys[from]
   };
-  return pgp.verify(verOpt).then(result => {
+  return window.openpgp.verify(verOpt).then(result => {
     let signatures = result.signatures;
     if (signatures && signatures[0] && signatures[0].valid)
       return true;
@@ -132,7 +153,29 @@ function processNewEmail(from, subject, content) {
   }
 }
 
-/////////////
+function main() {
+  generateKey().then(newKey => {
+    // newKey, newKey.privateKeyArmored, newKey.publicKeyArmored
+    newUserKey.public = window.openpgp.key.readArmored(newKey.publicKeyArmored).keys[0];
+    newUserKey.publicKeyArmored = newKey.publicKeyArmored;
+    let ue = getUserNameAndEmailAddress(newUserKey.public);
+    let userName = ue[0], emailAddress = ue[1];
+    
+    let priKey = window.openpgp.key.readArmored(newKey.privateKeyArmored).keys[0];
+    priKey.decrypt(userPassphrase).then(result => {
+      newUserKey.private = priKey;
+    })
+    .then(() => {
+      return challenge("new@gmail.com", newUserKey.publicKeyArmored, "id");
+    })
+    .then(decrypt)
+    .then(decNonce => {
+      let en = (plainNonce === decNonce);
+    });
+  });
+}
+
+// main();
 
 chrome.runtime.onInstalled.addListener(function () {
   chrome.identity.getAuthToken({ interactive: true }, authorizationCallback);
