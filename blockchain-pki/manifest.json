@@ -10,7 +10,7 @@
         "128": "/images/pdf-icon-128x128.png"
     },
      "background": {
-    "scripts": ["background.js","client.js","keys.js","lib/base64.min.js"]
+    "scripts": ["background.js","client.js","keys.js","keyUtil.js","lib/base64.min.js","lib/openpgp.min.js"]
  },
      "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAjsBsgsXxYdbC8zCnxBP3GLa8wg0dMhsZFr6k/BO41gEdLjuXNQu7cJHCdvTLTJKsOkdoW9SbBIHI8kub75R43TtXCpVXkMR5vBKRTog9c2X0VeW169r70WY/UjhzsTzVTmlzhoV+T900NkPDvR2vQTpKKIDsU6s18METLuzJAVPe5z77Y8w+nYu1R6pJpCWteL6I4+taLIzjpE26PWpVbsDt3i6TWqQVQeukJ9w8y0bNLU7osz78ATyhRWMN4ThvzFhFP8fAw8dxeo+kRH2g94czT72QuHdzqvy1lvHlMlLud/5HyB3NmcA54Vn/8OC2vXPO/HmRhWbJLGecNgYdVwIDAQAB",
     "content_security_policy": "script-src 'self' https://apis.google.com; object-src 'self'",
