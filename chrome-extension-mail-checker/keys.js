@@ -1,4 +1,5 @@
-let userName = "PKC", emailAddress = "address@gmail.com", userPassphrase="none";
+let userName = "PKC", emailAddress = "address@gmail.com";
+let userPassphrase="none";
 let pgp = window.openpgp;
 let allPublicKeys = {};
 let newUserKey = {public: null, private: null, publicKeyArmored: null};
@@ -13,6 +14,9 @@ function generateKey() {
   
   return pgp.generateKey(opts);
 }
+
+window.generateKey = generateKey;
+window.newUser = true;
 
 function getUserNameAndEmailAddress(publicKey) {
   let userid = publicKey.users[0].userId.userid;

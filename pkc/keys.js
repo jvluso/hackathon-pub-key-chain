@@ -1,9 +1,12 @@
 'use strict';
-let userName = "PKC", emailAddress = "address@gmail.com", userPassphrase="none";
+let userName = "PKC", emailAddress = "address@gmail.com";
+let userPassphrase="none";
 let pgp = window.openpgp;
+let allPublicKeys = {};
+let newUserKey = {public: null, private: null, publicKeyArmored: null};
+let plainNonce = undefined;
 
 function generateKey() {
-  console.log("generate keys...");
   let opts = {
     userIds: { name: userName, email: emailAddress },
     numBits: 2048,
@@ -14,8 +17,9 @@ function generateKey() {
 }
 
 window.generateKey = generateKey;
+window.newUser = true;
 
-function getUserNameAndEmailAddress(publicKeyArmored) {
+function getUserNameAndEmailAddress(publicKey) {
   let userid = publicKey.users[0].userId.userid;
   let user = /^(.*)<(.*)>$/.exec(userid);
   if (user.length != 3)
@@ -37,6 +41,49 @@ function increaseNonceStupid(array) {
   array[31] = lastByte;
 }
 
+function challenge(emailAddress, publicKey, id) {
+  let nonceStr = array2base64(generateNonce());
+  plainNonce = nonceStr;
+  let subject = "[PKC]";
+  publicKey = pgp.key.readArmored(publicKey).keys[0];
+  let encOpt = {
+    publicKeys: publicKey,
+    data: nonceStr
+  };
+  return pgp.encrypt(encOpt).then(encrypted => {
+    //TODO Send out challenge email
+    sendEmail(emailAddress, subject, encrypted.data);
+    allPublicKeys[emailAddress] = publicKey;
+    // For testing
+    return encrypted.data;
+  });
+}
+
+function sendEmail(emailAddress, subject, content) {
+}
+
+function decrypt(ciphertext) {
+  let decOpt = {
+    privateKeys: newUserKey.private,
+    message: pgp.message.readArmored(ciphertext)
+  };
+  return pgp.decrypt(decOpt).then(decrypted => decrypted.data);
+}
+
+function verifyChalglenge(from, responseBody) {
+  let verOpt = {
+    message: pgp.cleartext.readArmored(responseBody),
+    publicKeys: allPublicKeys[from]
+  };
+  return pgp.verify(verOpt).then(result => {
+    let signatures = result.signatures;
+    if (signatures && signatures[0] && signatures[0].valid)
+      return true;
+    else
+      return false;
+  });
+}
+
 // Utils
 function array2base64(array) {
   let b = array.reduce((res, byte) => res + String.fromCharCode(byte), '');
@@ -50,9 +97,22 @@ function base642array(str) {
 function main() {
   generateKey().then(newKey => {
     // newKey, newKey.privateKeyArmored, newKey.publicKeyArmored
-    let publicKey = pgp.key.readArmored(newKey.publicKeyArmored).keys[0];
-    let ue = getUserNameAndEmailAddress(publicKey);
+    newUserKey.public = pgp.key.readArmored(newKey.publicKeyArmored).keys[0];
+    newUserKey.publicKeyArmored = newKey.publicKeyArmored;
+    let ue = getUserNameAndEmailAddress(newUserKey.public);
     let userName = ue[0], emailAddress = ue[1];
+    
+    let priKey = pgp.key.readArmored(newKey.privateKeyArmored).keys[0];
+    priKey.decrypt(userPassphrase).then(result => {
+      newUserKey.private = priKey;
+    })
+    .then(() => {
+      return challenge("new@gmail.com", newUserKey.publicKeyArmored, "id");
+    })
+    .then(decrypt)
+    .then(decNonce => {
+      let en = (plainNonce === decNonce);
+    });
   });
 }
 
