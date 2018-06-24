@@ -1,5 +1,7 @@
 import Web3 from 'web3';
 const web3 = new Web3(window.web3.currentProvider);
+// import KeyRegistry.json
+// establish api address
 
 chrome.runtime.onInstalled.addListener(function () {
   chrome.identity.getAuthToken({ interactive: true }, authorizationCallback);
